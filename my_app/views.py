@@ -21,8 +21,10 @@ class GroupContactsViewSet(viewsets.ModelViewSet):
 
 @api_view(["POST"])
 def send_sms(request):
-    if "group" not in request.data:
-        return Response({"msg": "group is required"}, status=400)
+    fields = ["group", "message"]
+    for field in fields:
+        if field not in request.data:
+            return Response({"msg": f"field {field} is required"}, status=400)
     group = GroupContacts.objects.filter(id=request.data["group"]).first()
     contact_names = []
     if group:
@@ -32,7 +34,7 @@ def send_sms(request):
             client.messages.create(
                 from_=settings.TWILIO_PHONE_NUMBER,
                 to=contact.phone,
-                body=f"Olá {contact.name}, você acaba de ganhar 1 milhão de reais! Parabéns! Pode pagar o agiota em paz."
+                body=request.data["message"]
             )
             contact_names.append(contact.name)
     return Response({"msg": f"sms enviado com sucesso para {contact_names}!"})
